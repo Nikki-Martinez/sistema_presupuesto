@@ -1,0 +1,229 @@
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema de Control Financiero</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container" id="main-content">
+      <h1 style="text-align: center">Reporte de Situación Financiera</h1>
+
+      <div class="tabs no-export">
+        <button class="tab-btn active" onclick="cambiarTab('cuotas')">
+          Control de Cuotas
+        </button>
+        <button class="tab-btn" onclick="cambiarTab('presupuesto')">
+          Presupuesto Mensual
+        </button>
+      </div>
+
+      <div class="backup-bar">
+        <button class="btn-backup btn-pdf" onclick="exportarPDF()">
+          Generar PDF
+        </button>
+        <button class="btn-backup" onclick="exportarDatos()">
+          Exportar JSON
+        </button>
+        <button
+          class="btn-backup"
+          onclick="document.getElementById('fileInput').click()"
+        >
+          Importar
+        </button>
+        <input
+          type="file"
+          id="fileInput"
+          style="display: none"
+          onchange="importarDatos(event)"
+        />
+      </div>
+
+      <div id="vista-cuotas" class="view-section active">
+        <div class="salary-card">
+          <div class="salary-input-group">
+            <label>INGRESOS MENSUALES</label><br />
+            <input
+              type="number"
+              id="inputSalario"
+              onchange="actualizarSalario(this.value)"
+            />
+          </div>
+          <div style="text-align: right">
+            <label
+              style="
+                font-size: 0.65rem;
+                font-weight: 700;
+                color: var(--text-light);
+              "
+              >INDICE DE CARGA</label
+            >
+            <div
+              id="porcentajeSueldo"
+              style="font-size: 1.5rem; font-weight: 800; color: var(--danger)"
+            >
+              0%
+            </div>
+            <small
+              id="mensajeSueldo"
+              style="font-size: 0.7rem; font-weight: 600"
+            ></small>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Crédito Total</h3>
+            <p id="total-general">Q 0.00</p>
+          </div>
+          <div class="stat-card">
+            <h3>Saldo Pendiente</h3>
+            <p id="total-pendiente" style="color: var(--danger)">Q 0.00</p>
+          </div>
+          <div class="stat-card">
+            <h3>Capital Pagado</h3>
+            <p id="total-pagado" style="color: var(--success)">Q 0.00</p>
+          </div>
+          <div class="stat-card">
+            <h3>Compromiso Mes</h3>
+            <p id="total-mes" style="color: var(--accent)">Q 0.00</p>
+          </div>
+        </div>
+
+        <div class="card no-export">
+          <div class="form-group">
+            <div><label>Descripción</label><input type="text" id="desc" /></div>
+            <div>
+              <label>Institución / Banco</label>
+              <input
+                type="text"
+                id="banco"
+                list="bancos-list"
+                placeholder="Escribe o selecciona..."
+              />
+              <datalist id="bancos-list"></datalist>
+            </div>
+            <div>
+              <label>Monto Total (Q)</label><input type="number" id="monto" />
+            </div>
+            <div>
+              <label>Plazo (Meses)</label><input type="number" id="meses" />
+            </div>
+            <div>
+              <label>Cuotas Pagadas</label
+              ><input type="number" id="pagadas" value="0" />
+            </div>
+            <button class="btn-save" onclick="agregarCuota()">
+              Guardar Registro
+            </button>
+          </div>
+        </div>
+
+        <div class="search-container no-export">
+          <input
+            type="text"
+            id="busqueda"
+            class="search-input"
+            placeholder="Buscar por descripción..."
+            onkeyup="render()"
+          />
+          <select id="filtroBanco" class="search-input" onchange="render()">
+            <option value="">Todos los bancos</option>
+          </select>
+        </div>
+
+        <div
+          id="resumen-banco-filtrado"
+          class="resumen-banco-container"
+          style="display: none"
+        >
+          <h3
+            id="titulo-banco-filtrado"
+            style="margin: 0; font-size: 0.8rem; color: var(--primary)"
+          >
+            RESUMEN POR BANCO
+          </h3>
+          <div class="resumen-banco-grid">
+            <div class="resumen-banco-item">
+              <span>Ya Pagado (Verde)</span
+              ><b id="monto-banco-pagado" style="color: var(--success)"
+                >Q 0.00</b
+              >
+            </div>
+            <div class="resumen-banco-item">
+              <span>Se Debe (Rojo)</span
+              ><b id="monto-banco-debe" style="color: var(--danger)">Q 0.00</b>
+            </div>
+            <div class="resumen-banco-item">
+              <span>Pago Mensual</span
+              ><b id="monto-banco-cuota" style="color: var(--accent)">Q 0.00</b>
+            </div>
+          </div>
+          <div
+            class="progress-container"
+            style="margin: 15px 0 5px 0; height: 12px"
+          >
+            <div
+              id="barra-banco-progreso"
+              class="progress-bar"
+              style="width: 0%; background: var(--success)"
+            ></div>
+          </div>
+          <small
+            id="texto-banco-porcentaje"
+            style="
+              font-size: 0.7rem;
+              font-weight: 700;
+              color: var(--text-light);
+            "
+          ></small>
+        </div>
+
+        <div id="lista-cuotas"></div>
+      </div>
+
+      <div id="vista-presupuesto" class="view-section">
+        <div class="card no-export">
+          <div class="form-group">
+            <div>
+              <label>Descripción del Gasto</label
+              ><input type="text" id="p-desc" />
+            </div>
+            <div>
+              <label>Monto del Gasto (Q)</label
+              ><input type="number" id="p-monto" />
+            </div>
+            <button class="btn-save" onclick="agregarPresupuesto()">
+              Agregar al Presupuesto
+            </button>
+          </div>
+        </div>
+
+        <table class="budget-table">
+          <thead>
+            <tr>
+              <th>Descripción</th>
+              <th style="text-align: right">Monto</th>
+              <th class="no-export" style="text-align: center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="lista-presupuesto"></tbody>
+          <tfoot>
+            <tr class="row-auto">
+              <td>Total Cuotas</td>
+              <td style="text-align: right" id="p-total-cuotas">Q 0.00</td>
+              <td class="no-export"></td>
+            </tr>
+            <tr class="row-total">
+              <td>TOTAL GENERAL MENSUAL</td>
+              <td style="text-align: right" id="p-total-general">Q 0.00</td>
+              <td class="no-export"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    <script src="scripts.js"></script>
+  </body>
+</html>
